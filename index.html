@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <script src="attaques.js"></script>
+    <script src="meilleureFonctionnalitee.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.17.0/dist/phaser.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/reset.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+</head>
+
+<body>
+ 
+    <div id="allContainer" class='container-fluid'>
+        <div id="belowCont" class="row justify-content-center">
+            <div id="gameInfos">
+                <div>
+                    <img src="assets/images/pollinator.png" alt="logo pollinator">
+                </div>
+            </div>
+        </div>
+        <div id="aboveCont" class='row justify-content-center text-center'>
+            <div id="leftInfo" class='col-2'>
+                <h2>RULES :</h2>
+                <p>You are a bee.</p>
+                <p>To reach the highest score, you have to pollinate closed flowers with the pollen you grab from open
+                    flowers</p>
+                <p>Hornets & toxic chemicals will try to kill you... <br>
+                    ...Eliminate them.</p>
+                <p>You are the alpha bee.</p>
+                <p>You are the ...</p>
+                <p>POLLINATOR !</p>
+
+            </div>
+            <div id="game" class='col-8'>
+                <!-- HERE COMES THE GAME -->
+            </div>
+            <div id="rightInfo" class='col-2  text-left'>
+                <h2>KEYS :</h2>
+                <div class="row">
+                    <div class="col-4">
+                        &uarr;
+                    </div>
+                    <div class="col-8">
+                        forward
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-4">
+                        &larr;
+                    </div>
+                    <div class="col-8">
+                        left
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-4">
+                        &rarr;
+                    </div>
+                    <div class="col-8">
+                        right
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-4">
+                        &darr;
+                    </div>
+                    <div class="col-8">
+                        backward
+                    </div>
+                </div>
+                <br>
+                <div class="row">
+                    <div class="col-4">
+                        W
+                    </div>
+                    <div class="col-8">
+                        pollen
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-4">
+                        X
+                    </div>
+                    <div class="col-8">
+                        sting
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-4">
+                        P
+                    </div>
+                    <div class="col-8">
+                        pause
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-4">
+                        space
+                    </div>
+                    <div class="col-8">
+                        klaxon
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-center text-center">
+            <div>
+                <h2>CREDITS :</h2>
+                <p>Game developed by SUDO TEAM with Phaser 3, Javascript.</p>
+                <p>Music by B.O.T</p>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+
+        var config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            parent: 'game',
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    debug: false,
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            },
+
+        };
+
+        var player;
+        var acceleration = 2423;
+        var munitionDard = 50;
+        var munitionPollen = 5;
+        var showMunitionDard;
+        var munitionPollen = 5;
+        var showMunitionPollen;
+
+        var emitter;
+
+        var leaderboard;
+
+        var cursors;
+        var game = new Phaser.Game(config);
+        var tempsTir = 0;
+        var tempsPollen = 0;
+
+        var bg = [];
+
+        var livesCounter = 4;
+        var estVivant = true;
+        var showLives;
+        var showScore;
+
+        var showScoreValue;
+
+        var showPollen;
+
+        var currScore = 0;
+
+        var BGM;
+        var sfx_vie;
+        var sfx_dart;
+        var sfx_pollen;
+        var sfx_gameOver;
+        var sfx_getDard;
+        var sfx_getPollen;
+        var sfx_hitFlower;
+        var sfx_hitFrelon;
+        var sfx_noAmmo;
+        var klaxon;
+
+
+        function preload() {
+
+            this.load.image('bg', 'assets/images/background4.png');
+            this.load.image('orb', 'assets/images/pollen.png');
+            this.load.image('proj', 'assets/images/badbee.png');
+            this.load.image('att', 'assets/images/stinger_temp.png');
+            this.load.image('fleurCible', 'assets/images/target_flower.png');
+            this.load.image('fleurOuverte', 'assets/images/flower.png');
+            this.load.image('dard', 'assets/images/stinger.png');
+
+            this.load.spritesheet('player', 'assets/images/beesprite.png', { frameWidth: 44, frameHeight: 44 });
+
+            this.load.audio('bgm', 'assets/sounds/mainsound.wav');
+            this.load.audio('klaxon', 'assets/sounds/klaxon.wav');
+            this.load.audio('sfx_vie', 'assets/sounds/SAMPLES/loose_life.mp3');
+            this.load.audio('sfx_dart', 'assets/sounds/SAMPLES/shot_dard.mp3');
+            this.load.audio('sfx_pollen', 'assets/sounds/SAMPLES/shot_pollen.mp3');
+            this.load.audio('sfx_gameOver', 'assets/sounds/SAMPLES/gameOver.mp3');
+            this.load.audio('sfx_getDard', 'assets/sounds/SAMPLES/get_dard.mp3');
+            this.load.audio('sfx_getPollen', 'assets/sounds/SAMPLES/get_pollen.mp3');
+            this.load.audio('sfx_hitFlower', 'assets/sounds/SAMPLES/hit_flower.mp3');
+            this.load.audio('sfx_hitFlowerBreak', 'assets/sounds/SAMPLES/hit_flowerBreak.mp3');
+            this.load.audio('sfx_hitFrelon', 'assets/sounds/SAMPLES/hit_frelon.mp3');
+            this.load.audio('sfx_noAmmo', 'assets/sounds/SAMPLES/no_ammo.mp3');
+
+            this.load.bitmapFont('Naturel', 'css/fonts/Naturel/Naturel.png', 'css/fonts/Naturel/Naturel.fnt');
+            this.load.bitmapFont('Games', 'css/fonts/Games/Games.png', 'css/fonts/Games/Games.fnt');
+        }
+
+
+        function create() {
+            BGM = this.sound.add('bgm');
+            BGM.loop = true;
+            BGM.setVolume(0.5);
+            BGM.play();
+
+            sfx_vie = this.sound.add('sfx_vie');
+
+            sfx_vie = this.sound.add('sfx_vie').setVolume(0.5);
+            sfx_dart = this.sound.add('sfx_dart');
+            sfx_pollen = this.sound.add('sfx_pollen');
+            sfx_gameOver = this.sound.add('sfx_gameOver');
+            sfx_getDard = this.sound.add('sfx_getDard');
+            sfx_getPollen = this.sound.add('sfx_getPollen');
+            sfx_hitFlower = this.sound.add('sfx_hitFlower');
+            sfx_hitFlowerBreak = this.sound.add('sfx_hitFlowerBreak');
+            sfx_hitFrelon = this.sound.add('sfx_hitFrelon').setVolume(2);
+            sfx_noAmmo = this.sound.add('sfx_noAmmo');
+            klaxon = this.sound.add('klaxon');
+
+            for (var i = 0; i < 2; i++) {
+                bg[i] = this.physics.add.image(0, 0 - (600 * i), 'bg').setOrigin(0, 0);
+                bg[i].setVelocityY(500);
+                bg[i].setDepth(0);
+            }
+
+            for (var i = 0; i < 3; i++) {
+                bg[i] = this.physics.add.image(0, 0 - (600 * i), 'bg').setOrigin(0, 0);
+                bg[i].setVelocityY(500);
+                bg[i].setDepth(0);
+            }
+
+            var particles = this.add.particles('orb');
+
+            emitter = particles.createEmitter({
+                speed: 50,
+                scale: { start: 1, end: 0 },
+                frequency: 100,
+                quantity: 1,
+                blendMode: 'ADD'
+            });
+
+            emitter2 = particles.createEmitter({
+                speed: 100,
+                scale: { start: 1, end: 0 },
+                frequency: 10,
+                quantity: 1,
+                blendMode: 'ADD'
+            });
+            emitter2.stop();
+
+            showLives = this.add.bitmapText(20, 540, 'Naturel', 'Lives : ', 40);
+            showLives.setDepth(3);
+            livesVar = this.add.text(180, 540, livesCounter, { fontSize: '40px', fill: '#FFF' });
+            livesVar.setDepth(3);
+
+            showScore = this.add.bitmapText(230, 540, 'Naturel', 'Score : ' + currScore, 40);
+            showScore.setDepth(3);
+            showScoreValue = this.add.text(400, 543, currScore, { fontSize: '40px', fill: '#FFF' });
+            showScoreValue.setDepth(3);
+
+            setInterval(() => {
+                showScoreValue.destroy();
+                showScoreValue = this.add.text(400, 543, currScore, { fontSize: '40px', fill: '#FFF' });
+                showScoreValue.setDepth(3);
+            }, 200);
+
+            showPollen = this.add.bitmapText(530, 540, 'Naturel', 'Pollen : ', 40);
+            showPollen.setDepth(3);
+            showMunitionPollen = this.add.text(700, 545, munitionPollen, { fontSize: '40px', fill: '#FFF' });
+            showMunitionPollen.setDepth(3);
+            showDard = this.add.bitmapText(530, 500, 'Naturel', 'Dards : ', 40);
+            showDard.setDepth(3);
+            showMunitionDard = this.add.text(700, 505, munitionDard, { fontSize: '40px', fill: '#FFF' });
+            showMunitionDard.setDepth(3);
+
+            player = this.physics.add.sprite(400, 500, 'player');
+            player.setDepth(4);
+
+                        // animations player
+                        this.anims.create({
+                            key: 'left',
+                            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
+                            frameRate: 30,
+                            repeat: -1
+                        });
+
+                        this.anims.create({
+                            key: 'up',
+                            frames: [{ key: 'player', frame: 4 }],
+                            frameRate: 20
+                        });
+
+                        this.anims.create({
+                            key: 'right',
+                            frames: this.anims.generateFrameNumbers('player', { start: 5, end: 8 }),
+                            frameRate: 30,
+                            repeat: -1
+                        });
+                        // animations player
+
+
+                        tirs = this.physics.add.group();
+
+                        dardTirs = this.physics.add.group();
+                        dards = this.physics.add.group();
+
+                        player.setBounce(0.2);
+                        player.setCollideWorldBounds(true);
+                        player.setMaxVelocity(423);
+                        player.setDrag(800);
+
+                        emitter.startFollow(player);
+
+                        projectiles = this.physics.add.group();
+
+                        tirs = this.physics.add.group();
+                        dardTirs = this.physics.add.group();
+
+                        fleursCible = this.physics.add.group();
+                        fleursOuverte = this.physics.add.group();
+
+                        dards = this.physics.add.group();
+
+                        cursors = this.input.keyboard.addKeys({
+                            up: Phaser.Input.Keyboard.KeyCodes.UP,
+                            down: Phaser.Input.Keyboard.KeyCodes.DOWN,
+                            left: Phaser.Input.Keyboard.KeyCodes.LEFT,
+                            right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+                            w: Phaser.Input.Keyboard.KeyCodes.W,
+                            x: Phaser.Input.Keyboard.KeyCodes.X,
+                            space: Phaser.Input.Keyboard.KeyCodes.SPACE,
+                            p: Phaser.Input.Keyboard.KeyCodes.P
+                        });
+
+                        this.physics.add.collider(player, projectiles, touche, null, this);
+                        this.physics.add.collider(player, dards, ramasseMunitionDard, null, this);
+                        this.physics.add.collider(player, fleursOuverte, ramasseMunitionPollen, null, this);
+
+                        this.physics.add.collider(tirs, fleursCible, fleurCibleTir, null, this);
+                        this.physics.add.collider(projectiles, dardTirs, killStinger, null, this);
+
+                        this.physics.add.collider(dardTirs, fleursCible, killFleurCible, null, this);
+                    }
+
+
+                    function update(time, delta) {
+                        if (estVivant) {
+
+                            if (cursors.left.isDown) {
+                                player.setAccelerationX(-acceleration);
+                                player.anims.play('left', true);
+                            }
+                            else if (cursors.right.isDown) {
+                                player.setAccelerationX(acceleration);
+                                player.anims.play('right', true);
+                            }
+                            else {
+                                player.setAccelerationX(0);
+                                player.anims.play('up', true);
+                            };
+
+                            if (cursors.up.isDown) {
+                                player.setAccelerationY(-acceleration);
+                            }
+                            else if (cursors.down.isDown) {
+                                player.setAccelerationY(acceleration);
+                            }
+                            else {
+                                player.setAccelerationY(0);
+                            }
+
+                            if (cursors.space.isDown) {
+                                if (!klaxon.isPlaying) {
+                                    klaxon.play();
+                                }
+                            }
+
+                            if (cursors.p.isDown) {
+
+                                var pause = this.add.bitmapText(170, 200, 'Games', 'Pas de pause pour les braves', 30);
+                                pause.setDepth(3);
+
+                                setTimeout(function(){
+                                    pause.destroy();
+                                }, 1000)
+                            }
+
+                            if (cursors.w.isDown && time>tempsTir && munitionPollen>0) { // W = shot POLLEN
+                                tempsTir = time + 500;
+                                var tir = tirs.create(player.x, player.y, 'orb');
+                                tir.setDisplaySize(123, 123);
+                                tir.setVelocityY(-200);
+                                tir.setMass(5);
+                                tir.setDepth(2);
+                                munitionPollen--;
+
+                                sfx_pollen.play();
+
+                                emitter2.start();
+                                emitter2.startFollow(tir);
+                                refreshAmmos(this);
+                            }
+                            else if (cursors.x.isDown && time > tempsTir && munitionDard>0) { // X = shot DARD
+                                tempsTir = time + 100;
+                                var proj = dardTirs.create(player.x, player.y, 'att');
+                                proj.setTint('#ffffff');
+                                proj.setVelocity(0, -1000);
+                                proj.setDepth(2);
+                                munitionDard--;
+
+                                sfx_dart.play();
+
+                                refreshAmmos(this);
+                            }
+
+                            if (cursors.w.isDown && munitionPollen==0 && !sfx_noAmmo.isPlaying || cursors.x.isDown && munitionDard==0 && !sfx_noAmmo.isPlaying) {
+                                sfx_noAmmo.play();
+                            }
+
+                            for (var i = bg.length - 1; i >= 0; i--) {
+                                if (bg[i].y >= 595) {
+                                    bg[i].y = -600;
+                                }
+                            }
+                            attaquer(time);
+                        }
+                        function refreshAmmos(source) {
+                            showMunitionPollen.destroy();
+                            showMunitionDard.destroy();
+                            showMunitionDard = source.add.text(700, 505, munitionDard, { fontSize: '40px', fill: '#FFF' });
+                            showMunitionPollen = source.add.text(700, 545, munitionPollen, { fontSize: '40px', fill: '#FFF' });
+                        }
+                    }
+
+
+                    function touche(player, proj) {
+                        if (!sfx_vie.isPlaying){
+                            sfx_vie.play();
+                            proj.destroy();
+
+                            livesCounter -= 1;
+
+                            livesVar.destroy();
+                            livesVar = this.add.text(180, 540, livesCounter, { fontSize: '40px', fill: '#FFF' });
+                            livesVar.setDepth(3);
+
+                            if (livesCounter <= 0) { // Players dies
+                                player.setTint(0x000000);
+
+                                fleursCible.clear(true, true);
+                                fleursOuverte.clear(true, true);
+                                dards.clear(true, true);
+
+                                sfx_gameOver.play();
+
+                                this.physics.pause();
+                                estVivant = false;
+                                emitter.stop();
+                                player.anims.play('up', true);
+                                showLives = this.add.bitmapText(200, 200, 'Games', 'GAME OVER', 70);
+                                showLives.setDepth(100);
+
+                                clearInterval(humanInterval);
+
+                                endGame();
+
+                                async function endGame() {
+                                    await fetch('php/addScore.php?score='+currScore)
+                                    .then((resp) => {
+                                        console.log("Entered your score on the Leaderboard !");
+                                    })
+                                    .catch((e) => {
+                                        console.log("Erreur : " + e);
+                                    });
+
+                                    getLeader('php/getScore.php')
+                                    .then((response) => {
+                                        leaderboard = response;
+                                        showLeaderboards(leaderboard);
+                                    })
+                                    .catch((e) => {
+                                        console.log("Erreur : " + e);
+                                    })
+                                }
+
+                                async function getLeader(url) {
+                                    let results = await fetch(url);
+                                    return results.json();
+                                }
+
+
+
+                            }
+                            else {
+                                for (var i = 0; i < 2000; i = i + 400) {
+                                    setTimeout(function () {
+                                        player.setTint(0xff0000)
+                                    }, i);
+                                    setTimeout(function () {
+                                        player.setTint(0xffffff)
+                                    }, i + 200);
+                                }
+                            }
+                        }
+                    }
+
+                    function refreshAmmos(source) {
+                        showMunitionPollen.destroy();
+                        showMunitionDard.destroy();
+                        showMunitionDard = source.add.text(700, 505, munitionDard, { fontSize: '40px', fill: '#FFF' });
+                        showMunitionPollen = source.add.text(700, 545, munitionPollen, { fontSize: '40px', fill: '#FFF' });
+                    }
+
+                    function fleurCibleTir(tir, fleurCible) {
+                        fleurCible.destroy();
+                        tir.destroy();
+                        emitter2.stop();
+                        currScore += 500;
+                        sfx_hitFlower.play();
+                    }
+
+                    function ramasseMunitionDard(player, dard) {
+                        dard.destroy();
+                        munitionDard += 20;
+
+                        sfx_getDard.play();
+
+                        showMunitionDard.destroy();
+                        showMunitionDard = this.add.text(700, 505, munitionDard, { fontSize: '40px', fill: '#FFF' });
+                    }
+                    function ramasseMunitionPollen(player, fleurOuverte) {
+                        fleurOuverte.destroy();
+                        munitionPollen += 3;
+
+                        sfx_getPollen.play();
+
+                        showMunitionPollen.destroy();
+                        showMunitionPollen = this.add.text(700, 545, munitionPollen, { fontSize: '40px', fill: '#FFF' });
+                    }
+
+                    function killStinger(stinger, shot) {
+                        stinger.destroy();
+                        shot.destroy();
+                        currScore += 20;
+                        sfx_hitFrelon.play();
+                    }
+
+                    function killFleurCible(shot, flower) {
+                        flower.destroy();
+                        shot.destroy();
+                        sfx_hitFlowerBreak.play();
+                    }
+
+                    function showLeaderboards(board) {
+                        console.log("Leaderboards shown !");
+                        document.getElementById("leaderboardDisplay").style.display = "flex";
+                        document.getElementById("leaderboard1").innerHTML = board[0];
+                        document.getElementById("leaderboard2").innerHTML = board[1];
+                        document.getElementById("leaderboard3").innerHTML = board[2];
+                        document.getElementById("leaderboard4").innerHTML = board[3];
+                        document.getElementById("leaderboard5").innerHTML = board[4];
+                    }
+
+                    let humanInterval = setInterval(humanInteraction, 500);
+
+                    function humanInteraction() {
+                        if (currScore > 0) {
+                            currScore--;
+                        }
+                    }
+
+                </script>
+
+                <div id="leaderboardDisplay">
+                    <p>Top 1 : <span class="leaderboardScore" id="leaderboard1"></p>
+                    <p>Top 2 : <span class="leaderboardScore" id="leaderboard2"></p>
+                    <p>Top 3 : <span class="leaderboardScore" id="leaderboard3"></p>
+                    <p>Top 4 : <span class="leaderboardScore" id="leaderboard4"></p>
+                    <p>Top 5 : <span class="leaderboardScore" id="leaderboard5"></p>
+                </div>
+
+            </body>
+
+            </html>
